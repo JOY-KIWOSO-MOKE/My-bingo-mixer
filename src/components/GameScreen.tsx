@@ -1,5 +1,7 @@
 ﻿import type { BingoSquareData } from '../types';
 import { BingoBoard } from './BingoBoard';
+import useSound from '../hooks/useSound';
+import { useEffect } from 'react';
 
 interface GameScreenProps {
   board: BingoSquareData[];
@@ -16,6 +18,17 @@ export function GameScreen({
   onSquareClick,
   onReset,
 }: GameScreenProps) {
+  const { muted, toggleMute, play } = useSound();
+
+  useEffect(() => {
+    if (hasBingo) play('victory');
+  }, [hasBingo]);
+
+  function handleSquareClick(id: number) {
+    play('click');
+    onSquareClick(id);
+  }
+
   return (
     <div className="flex flex-col min-h-full bg-cp-bg text-white">
       <header className="flex items-center justify-between p-4 bg-surface/60 border-b border-[rgba(255,45,149,0.08)] shadow-neon">
@@ -30,7 +43,14 @@ export function GameScreen({
         <h1 className="text-xl font-extrabold neon-text">Bingo Mixer</h1>
 
         <div className="w-20 text-right">
-          {/* reserved for future controls */}
+          <button
+            onClick={toggleMute}
+            aria-pressed={muted}
+            className="px-2 py-1 rounded-md btn-neon text-sm neon-glow"
+            title={muted ? 'Unmute sounds' : 'Mute sounds'}
+          >
+            {muted ? '🔇' : '🔊'}
+          </button>
         </div>
       </header>
 
@@ -55,7 +75,7 @@ export function GameScreen({
           <BingoBoard
             board={board}
             winningSquareIds={winningSquareIds}
-            onSquareClick={onSquareClick}
+            onSquareClick={handleSquareClick}
           />
         </div>
       </main>
