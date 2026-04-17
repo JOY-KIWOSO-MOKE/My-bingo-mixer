@@ -1,12 +1,18 @@
-﻿import { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState, useCallback } from 'react';
 
 type SoundName = 'click' | 'victory';
+
+interface WindowWithAudio {
+  AudioContext?: typeof AudioContext;
+  webkitAudioContext?: typeof AudioContext;
+}
 
 export function useSound() {
   const [muted, setMuted] = useState(() => {
     try {
       return localStorage.getItem('bingo_sound_muted') === '1';
-    } catch {
+    } catch (e) {
+      console.debug('localStorage read failed', e);
       return false;
     }
   });
@@ -15,13 +21,14 @@ export function useSound() {
 
   function ensureCtx() {
     if (audioCtxRef.current) return audioCtxRef.current;
-    const C = (window as any).AudioContext || (window as any).webkitAudioContext;
+    const win = window as unknown as WindowWithAudio;
+    const C = win.AudioContext || win.webkitAudioContext;
     if (!C) return null;
     audioCtxRef.current = new C();
     return audioCtxRef.current;
   }
 
-  function playClick() {
+  const playClick = useCallback(() => {
     if (muted) return;
     const ctx = ensureCtx();
     if (!ctx) return;
@@ -36,9 +43,9 @@ export function useSound() {
     g.connect(ctx.destination);
     o.start();
     o.stop(ctx.currentTime + 0.12);
-  }
+  }, [muted]);
 
-  function playVictory() {
+  const playVictory = useCallback(() => {
     if (muted) return;
     const ctx = ensureCtx();
     if (!ctx) return;
@@ -58,22 +65,26 @@ export function useSound() {
       o.start(t);
       o.stop(t + 0.5);
     });
-  }
+  }, [muted]);
 
-  function play(name: SoundName) {
+  const play = useCallback((name: SoundName) => {
     if (name === 'click') playClick();
     if (name === 'victory') playVictory();
-  }
+  }, [playClick, playVictory]);
 
-  function toggleMute() {
+  const toggleMute = useCallback(() => {
     const v = !muted;
     setMuted(v);
-    try { localStorage.setItem('bingo_sound_muted', v ? '1' : '0'); } catch {}
-  }
+    try { localStorage.setItem('bingo_sound_muted', v ? '1' : '0'); } catch (e) { console.debug('localStorage write failed', e); }
+  }, [muted]);
 
   useEffect(() => {
     return () => {
-      try { audioCtxRef.current?.close(); } catch {}
+      try {
+        audioCtxRef.current?.close();
+      } catch (e) {
+        console.debug('closing audio context failed', e);
+      }
       audioCtxRef.current = null;
     };
   }, []);
