@@ -1,4 +1,4 @@
-import type { BingoSquareData } from '../types';
+﻿import type { BingoSquareData } from '../types';
 
 interface BingoSquareProps {
   square: BingoSquareData;
@@ -7,28 +7,35 @@ interface BingoSquareProps {
 }
 
 export function BingoSquare({ square, isWinning, onClick }: BingoSquareProps) {
-  const baseClasses =
-    'relative flex items-center justify-center p-1 text-center border border-gray-300 rounded transition-all duration-150 select-none min-h-[60px] text-xs leading-tight';
+  const base = 'relative flex items-center justify-center p-2 text-center rounded-lg transition-all duration-200 select-none min-h-[72px]';
 
-  const stateClasses = square.isMarked
-    ? isWinning
-      ? 'bg-amber-200 border-amber-400 text-amber-900'
-      : 'bg-marked border-marked-border text-green-800'
-    : 'bg-white text-gray-700 active:bg-gray-100';
+  const normal = 'bg-surface/30 border border-[rgba(255,45,149,0.04)] text-gray-200';
+  const marked = 'bg-[rgba(255,45,149,0.14)] border-[rgba(255,45,149,0.16)] text-white shadow-[0_6px_18px_rgba(255,45,149,0.06)]';
+  const winningStyle = 'bg-gradient-to-tr from-[#FF2D95] via-[#6EE7FF] to-[#8B5CF6] text-black font-bold shadow-neon scale-105';
 
-  const freeSpaceClasses = square.isFreeSpace ? 'font-bold text-sm' : '';
+  const stateClass = square.isMarked ? (isWinning ? winningStyle : marked) : normal;
+  const freeClass = square.isFreeSpace ? 'font-semibold text-sm opacity-95' : 'text-sm';
 
   return (
     <button
       onClick={onClick}
       disabled={square.isFreeSpace}
-      className={`${baseClasses} ${stateClasses} ${freeSpaceClasses}`}
       aria-pressed={square.isMarked}
       aria-label={square.isFreeSpace ? 'Free space' : square.text}
+      className={`${base} ${stateClass} ${freeClass} neon-glow`}
     >
-      <span className="wrap-break-word hyphens-auto">{square.text}</span>
+      <div className="px-2">
+        <span className="break-words leading-tight">{square.text}</span>
+      </div>
+
+      {/* Visual check / mark */}
       {square.isMarked && !square.isFreeSpace && (
-        <span className="absolute top-0.5 right-0.5 text-green-600 text-xs">✓</span>
+        <span className="absolute top-2 right-2 text-xs text-white opacity-95 animate-pulse">✓</span>
+      )}
+
+      {/* Winning pulse */}
+      {isWinning && (
+        <span className="absolute inset-0 pointer-events-none opacity-30 animate-ping bg-gradient-to-r from-[#FF2D95] via-[#6EE7FF] to-[#8B5CF6]"></span>
       )}
     </button>
   );
